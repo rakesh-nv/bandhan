@@ -7,7 +7,8 @@ import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../../widgets/empty_state.dart';
 import '../../routes/routes.dart';
-import '../../models/models.dart';
+import '../../models/message_model.dart';
+import '../../controllers/profile_controller.dart';
 import 'chat_controller.dart';
 
 class ChatsTab extends StatelessWidget {
@@ -16,6 +17,7 @@ class ChatsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(ChatController());
+    final ProfileController profileCtrl = Get.find<ProfileController>();
 
     return Scaffold(
       backgroundColor: AppColors.surfaceCream,
@@ -24,7 +26,7 @@ class ChatsTab extends StatelessWidget {
         children: [
           // Banner for Premium chat upgrade
           Obx(() {
-            final isPremium = controller.dbService.currentUser.value?.isPremium ?? false;
+            final isPremium = profileCtrl.currentProfile.value?.isPremium ?? false;
             if (isPremium) return const SizedBox.shrink();
             
             return Container(
@@ -128,9 +130,7 @@ class ChatsTab extends StatelessWidget {
                   final lastMessage = item.lastMessage;
                   final unreadCount = item.unreadCount;
                   
-                  // Check if photos should be locked (if locked for non-premium)
-                  final currentUserPremium = controller.dbService.currentUser.value?.isPremium ?? false;
-                  final blurImage = profile.photosLocked && !currentUserPremium;
+                  final blurImage = false; // Photos are never locked in ProfileModel
 
                   return ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -152,9 +152,7 @@ class ChatsTab extends StatelessWidget {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(26),
                             child: CachedNetworkImage(
-                              imageUrl: profile.photoUrls.isNotEmpty
-                                  ? profile.photoUrls.first
-                                  : AppPlaceholderImages.avatarFemale1,
+                              imageUrl: profile.profilePhoto ?? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&fit=crop&q=80',
                               fit: BoxFit.cover,
                               width: 52,
                               height: 52,
@@ -193,6 +191,9 @@ class ChatsTab extends StatelessWidget {
                           ),
                       ],
                     ),
+                    onLongPress: () {
+                      // Option to clear chat thread
+                    },
                     title: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -200,17 +201,17 @@ class ChatsTab extends StatelessWidget {
                           child: Row(
                             children: [
                               Flexible(
-                                child: Text(
-                                  profile.name,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    color: AppColors.textDark,
-                                    fontWeight: unreadCount > 0 ? FontWeight.bold : FontWeight.w600,
-                                    fontSize: 16,
+                                  child: Text(
+                                    profile.fullName ?? 'User',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      color: AppColors.textDark,
+                                      fontWeight: unreadCount > 0 ? FontWeight.bold : FontWeight.w600,
+                                      fontSize: 16,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
                               if (profile.isVerified) ...[
                                 const SizedBox(width: 4),
                                 const Icon(Icons.verified, color: Colors.blue, size: 16),
@@ -224,7 +225,7 @@ class ChatsTab extends StatelessWidget {
                         ),
                         if (lastMessage != null)
                           Text(
-                            _formatMessageTime(lastMessage.sentAt),
+                            _formatMessageTime(lastMessage.createdAt ?? DateTime.now()),
                             style: GoogleFonts.inter(
                               color: unreadCount > 0 ? AppColors.primaryMaroon : AppColors.textDarkMuted,
                               fontSize: 11,
@@ -279,11 +280,9 @@ class ChatsTab extends StatelessWidget {
     );
   }
 
-  String _getMessagePreview(Message? message) {
+  String _getMessagePreview(MessageModel? message) {
     if (message == null) return "Connected! Start a conversation.";
-    if (message.mediaUrl != null) return "📷 Photo shared";
-    if (message.isAudio) return "🎵 Audio message";
-    return message.content;
+    return message.message;
   }
 
   String _formatMessageTime(DateTime time) {

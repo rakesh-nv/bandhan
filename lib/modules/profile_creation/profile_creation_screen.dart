@@ -28,17 +28,26 @@ class ProfileCreationScreen extends StatelessWidget {
               return Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.margin, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.margin,
+                      vertical: 8,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Step ${step + 1} of ${controller.totalSteps}',
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryMaroon),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryMaroon,
+                          ),
                         ),
                         Text(
                           '${(percent * 100).toInt()}% Done',
-                          style: const TextStyle(color: AppColors.textDarkMuted, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            color: AppColors.textDarkMuted,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
@@ -51,9 +60,7 @@ class ProfileCreationScreen extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       child: FractionallySizedBox(
                         widthFactor: percent,
-                        child: Container(
-                          color: AppColors.primaryMaroon,
-                        ),
+                        child: Container(color: AppColors.primaryMaroon),
                       ),
                     ),
                   ),
@@ -115,14 +122,21 @@ class ProfileCreationScreen extends StatelessWidget {
                   // Next / Save button
                   Expanded(
                     child: Obx(() {
-                      final isLast = controller.currentStep.value == controller.totalSteps - 1;
+                      final isLast =
+                          controller.currentStep.value ==
+                          controller.totalSteps - 1;
                       return ElevatedButton(
-                        onPressed: controller.isSubmitting.value ? null : controller.nextStep,
+                        onPressed: controller.isSubmitting.value
+                            ? null
+                            : controller.nextStep,
                         child: controller.isSubmitting.value
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
                               )
                             : Text(isLast ? 'Submit Profile' : 'Next Step'),
                       );
@@ -138,19 +152,25 @@ class ProfileCreationScreen extends StatelessWidget {
   }
 
   // Step 1: Personal Details View
-  Widget _buildStep1(BuildContext context, ProfileCreationController controller) {
+  Widget _buildStep1(
+    BuildContext context,
+    ProfileCreationController controller,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Personal Details',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryMaroon,
-              ),
+            fontWeight: FontWeight.bold,
+            color: AppColors.primaryMaroon,
+          ),
         ),
         const SizedBox(height: 8),
-        const Text('Provide your basic physical and profile identifiers.', style: TextStyle(color: AppColors.textDarkMuted)),
+        const Text(
+          'Provide your basic physical and profile identifiers.',
+          style: TextStyle(color: AppColors.textDarkMuted),
+        ),
         const SizedBox(height: 32),
 
         // Gender Selector
@@ -166,18 +186,34 @@ class ProfileCreationScreen extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
-                      color: isMale ? AppColors.primaryMaroon.withOpacity(0.05) : AppColors.surfaceWhite,
+                      color: isMale
+                          ? AppColors.primaryMaroon.withOpacity(0.05)
+                          : AppColors.surfaceWhite,
                       border: Border.all(
-                        color: isMale ? AppColors.primaryMaroon : AppColors.surfaceCreamDim,
+                        color: isMale
+                            ? AppColors.primaryMaroon
+                            : AppColors.surfaceCreamDim,
                         width: isMale ? 2 : 1,
                       ),
                       borderRadius: BorderRadius.circular(AppRadius.input),
                     ),
                     child: Column(
                       children: [
-                        Icon(Icons.male, color: isMale ? AppColors.primaryMaroon : Colors.grey, size: 28),
+                        Icon(
+                          Icons.male,
+                          color: isMale ? AppColors.primaryMaroon : Colors.grey,
+                          size: 28,
+                        ),
                         const SizedBox(height: 8),
-                        Text('Male', style: TextStyle(color: isMale ? AppColors.primaryMaroon : AppColors.textDark, fontWeight: FontWeight.bold)),
+                        Text(
+                          'Male',
+                          style: TextStyle(
+                            color: isMale
+                                ? AppColors.primaryMaroon
+                                : AppColors.textDark,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -187,24 +223,43 @@ class ProfileCreationScreen extends StatelessWidget {
             const SizedBox(width: 16),
             Expanded(
               child: Obx(() {
-                final isFemale = controller.selectedGender.value == Gender.female;
+                final isFemale =
+                    controller.selectedGender.value == Gender.female;
                 return InkWell(
                   onTap: () => controller.selectedGender.value = Gender.female,
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
-                      color: isFemale ? AppColors.primaryMaroon.withOpacity(0.05) : AppColors.surfaceWhite,
+                      color: isFemale
+                          ? AppColors.primaryMaroon.withOpacity(0.05)
+                          : AppColors.surfaceWhite,
                       border: Border.all(
-                        color: isFemale ? AppColors.primaryMaroon : AppColors.surfaceCreamDim,
+                        color: isFemale
+                            ? AppColors.primaryMaroon
+                            : AppColors.surfaceCreamDim,
                         width: isFemale ? 2 : 1,
                       ),
                       borderRadius: BorderRadius.circular(AppRadius.input),
                     ),
                     child: Column(
                       children: [
-                        Icon(Icons.female, color: isFemale ? AppColors.primaryMaroon : Colors.grey, size: 28),
+                        Icon(
+                          Icons.female,
+                          color: isFemale
+                              ? AppColors.primaryMaroon
+                              : Colors.grey,
+                          size: 28,
+                        ),
                         const SizedBox(height: 8),
-                        Text('Female', style: TextStyle(color: isFemale ? AppColors.primaryMaroon : AppColors.textDark, fontWeight: FontWeight.bold)),
+                        Text(
+                          'Female',
+                          style: TextStyle(
+                            color: isFemale
+                                ? AppColors.primaryMaroon
+                                : AppColors.textDark,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -216,40 +271,85 @@ class ProfileCreationScreen extends StatelessWidget {
         const SizedBox(height: 24),
 
         // Date of Birth DatePicker
-        const Text('Date of Birth', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text(
+          'Date of Birth',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
+
         InkWell(
           onTap: () async {
             final picked = await showDatePicker(
               context: context,
-              initialDate: DateTime.now().subtract(const Duration(days: 365 * 25)),
+              initialDate: DateTime.now().subtract(
+                const Duration(days: 365 * 25),
+              ),
               firstDate: DateTime(1950),
               lastDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
             );
+
             if (picked != null) {
+              // Assign DOB
               controller.dob.value = picked;
+
+              // Calculate Age
+              controller.calculateAge(picked);
             }
           },
+
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+
             decoration: BoxDecoration(
               color: AppColors.surfaceWhite,
               border: Border.all(color: AppColors.surfaceCreamDim),
               borderRadius: BorderRadius.circular(AppRadius.input),
             ),
+
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
               children: [
-                Obx(() => Text(
-                      controller.dob.value != null
-                          ? DateFormat('dd MMMM yyyy').format(controller.dob.value!)
-                          : 'Select Date of Birth',
-                      style: TextStyle(
-                        color: controller.dob.value != null ? AppColors.textDark : Colors.grey,
-                        fontSize: 16,
+                Obx(
+                  () => Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        controller.dob.value != null
+                            ? DateFormat(
+                                'dd MMMM yyyy',
+                              ).format(controller.dob.value!)
+                            : 'Select Date of Birth',
+
+                        style: TextStyle(
+                          color: controller.dob.value != null
+                              ? AppColors.textDark
+                              : Colors.grey,
+                          fontSize: 16,
+                        ),
                       ),
-                    )),
-                const Icon(Icons.calendar_month, color: AppColors.primaryMaroon),
+
+                      // SHOW AGE
+                      if (controller.calculatedAge.value > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            'Age: ${controller.calculatedAge.value} years',
+                            style: const TextStyle(
+                              color: AppColors.primaryMaroon,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
+                const Icon(
+                  Icons.calendar_month,
+                  color: AppColors.primaryMaroon,
+                ),
               ],
             ),
           ),
@@ -263,7 +363,10 @@ class ProfileCreationScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Height (cm)', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Height (cm)',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: controller.heightController,
@@ -278,7 +381,10 @@ class ProfileCreationScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Weight (kg)', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Weight (kg)',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: controller.weightController,
@@ -293,7 +399,10 @@ class ProfileCreationScreen extends StatelessWidget {
         const SizedBox(height: 24),
 
         // Marital Status
-        const Text('Marital Status', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text(
+          'Marital Status',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         DropdownButtonFormField<MaritalStatus>(
           value: controller.selectedMaritalStatus.value,
@@ -302,11 +411,9 @@ class ProfileCreationScreen extends StatelessWidget {
             String label = 'Never Married';
             if (status == MaritalStatus.divorced) label = 'Divorced';
             if (status == MaritalStatus.widowed) label = 'Widowed';
-            if (status == MaritalStatus.awaitingDivorce) label = 'Awaiting Divorce';
-            return DropdownMenuItem(
-              value: status,
-              child: Text(label),
-            );
+            if (status == MaritalStatus.awaitingDivorce)
+              label = 'Awaiting Divorce';
+            return DropdownMenuItem(value: status, child: Text(label));
           }).toList(),
           onChanged: (val) {
             if (val != null) {
@@ -319,19 +426,25 @@ class ProfileCreationScreen extends StatelessWidget {
   }
 
   // Step 2: Cultural / Background
-  Widget _buildStep2(BuildContext context, ProfileCreationController controller) {
+  Widget _buildStep2(
+    BuildContext context,
+    ProfileCreationController controller,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Cultural & Region',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryMaroon,
-              ),
+            fontWeight: FontWeight.bold,
+            color: AppColors.primaryMaroon,
+          ),
         ),
         const SizedBox(height: 8),
-        const Text('Help matches discover you within community guidelines.', style: TextStyle(color: AppColors.textDarkMuted)),
+        const Text(
+          'Help matches discover you within community guidelines.',
+          style: TextStyle(color: AppColors.textDarkMuted),
+        ),
         const SizedBox(height: 32),
 
         // Religion selection dropdown
@@ -349,7 +462,10 @@ class ProfileCreationScreen extends StatelessWidget {
         const SizedBox(height: 24),
 
         // Caste / Community selection dropdown
-        const Text('Community / Caste', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text(
+          'Community / Caste',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           value: controller.selectedCommunity.value,
@@ -363,7 +479,10 @@ class ProfileCreationScreen extends StatelessWidget {
         const SizedBox(height: 24),
 
         // Mother tongue
-        const Text('Mother Tongue', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text(
+          'Mother Tongue',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller.motherTongueController,
@@ -374,7 +493,10 @@ class ProfileCreationScreen extends StatelessWidget {
         const SizedBox(height: 24),
 
         // Location
-        const Text('Current Location (City, State)', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text(
+          'Current Location (City, State)',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller.locationController,
@@ -388,23 +510,32 @@ class ProfileCreationScreen extends StatelessWidget {
   }
 
   // Step 3: Professional Details
-  Widget _buildStep3(BuildContext context, ProfileCreationController controller) {
+  Widget _buildStep3(
+    BuildContext context,
+    ProfileCreationController controller,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Education & Profession',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryMaroon,
-              ),
+            fontWeight: FontWeight.bold,
+            color: AppColors.primaryMaroon,
+          ),
         ),
         const SizedBox(height: 8),
-        const Text('Let candidates know about your academic and career achievements.', style: TextStyle(color: AppColors.textDarkMuted)),
+        const Text(
+          'Let candidates know about your academic and career achievements.',
+          style: TextStyle(color: AppColors.textDarkMuted),
+        ),
         const SizedBox(height: 32),
 
         // Education
-        const Text('Education / Degree', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text(
+          'Education / Degree',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller.educationController,
@@ -428,7 +559,10 @@ class ProfileCreationScreen extends StatelessWidget {
         const SizedBox(height: 24),
 
         // Salary
-        const Text('Annual Salary (LPA in ₹)', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text(
+          'Annual Salary (LPA in ₹)',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller.salaryController,
@@ -441,13 +575,17 @@ class ProfileCreationScreen extends StatelessWidget {
         const SizedBox(height: 24),
 
         // Bio/About Me
-        const Text('About Me (Bio)', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text(
+          'About Me (Bio)',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller.bioController,
           maxLines: 4,
           decoration: const InputDecoration(
-            hintText: 'Write a few lines describing your personality, values, and what you are looking for in a partner...',
+            hintText:
+                'Write a few lines describing your personality, values, and what you are looking for in a partner...',
           ),
         ),
       ],
@@ -455,29 +593,39 @@ class ProfileCreationScreen extends StatelessWidget {
   }
 
   // Step 4: Family Details & Preferences
-  Widget _buildStep4(BuildContext context, ProfileCreationController controller) {
+  Widget _buildStep4(
+    BuildContext context,
+    ProfileCreationController controller,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Family & Preferences',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryMaroon,
-              ),
+            fontWeight: FontWeight.bold,
+            color: AppColors.primaryMaroon,
+          ),
         ),
         const SizedBox(height: 8),
-        const Text('Optional details to clarify partner search guidelines.', style: TextStyle(color: AppColors.textDarkMuted)),
+        const Text(
+          'Optional details to clarify partner search guidelines.',
+          style: TextStyle(color: AppColors.textDarkMuted),
+        ),
         const SizedBox(height: 32),
 
         // Family Details
-        const Text('Family Details', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text(
+          'Family Details',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller.familyController,
           maxLines: 3,
           decoration: const InputDecoration(
-            hintText: 'Briefly mention family background (e.g. Parents occupations, siblings details)',
+            hintText:
+                'Briefly mention family background (e.g. Parents occupations, siblings details)',
           ),
         ),
         const SizedBox(height: 32),
@@ -498,47 +646,70 @@ class ProfileCreationScreen extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Preferred Age Range', style: TextStyle(fontWeight: FontWeight.w600)),
-            Obx(() => Text(
-                  '${controller.minPartnerAge.value.toInt()} - ${controller.maxPartnerAge.value.toInt()} yrs',
-                  style: const TextStyle(color: AppColors.primaryMaroon, fontWeight: FontWeight.bold),
-                )),
+            const Text(
+              'Preferred Age Range',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            Obx(
+              () => Text(
+                '${controller.minPartnerAge.value.toInt()} - ${controller.maxPartnerAge.value.toInt()} yrs',
+                style: const TextStyle(
+                  color: AppColors.primaryMaroon,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ],
         ),
-        Obx(() => RangeSlider(
-              values: RangeValues(controller.minPartnerAge.value, controller.maxPartnerAge.value),
-              min: 18,
-              max: 60,
-              activeColor: AppColors.primaryMaroon,
-              inactiveColor: AppColors.surfaceCreamDim,
-              onChanged: (values) {
-                controller.minPartnerAge.value = values.start;
-                controller.maxPartnerAge.value = values.end;
-              },
-            )),
+        Obx(
+          () => RangeSlider(
+            values: RangeValues(
+              controller.minPartnerAge.value,
+              controller.maxPartnerAge.value,
+            ),
+            min: 18,
+            max: 60,
+            activeColor: AppColors.primaryMaroon,
+            inactiveColor: AppColors.surfaceCreamDim,
+            onChanged: (values) {
+              controller.minPartnerAge.value = values.start;
+              controller.maxPartnerAge.value = values.end;
+            },
+          ),
+        ),
         const SizedBox(height: 16),
 
         // Partner Min Salary
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Minimum Partner Salary', style: TextStyle(fontWeight: FontWeight.w600)),
-            Obx(() => Text(
-                  '₹${controller.minPartnerSalary.value.toInt()} LPA+',
-                  style: const TextStyle(color: AppColors.primaryMaroon, fontWeight: FontWeight.bold),
-                )),
+            const Text(
+              'Minimum Partner Salary',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            Obx(
+              () => Text(
+                '₹${controller.minPartnerSalary.value.toInt()} LPA+',
+                style: const TextStyle(
+                  color: AppColors.primaryMaroon,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ],
         ),
-        Obx(() => Slider(
-              value: controller.minPartnerSalary.value,
-              min: 0,
-              max: 100,
-              activeColor: AppColors.primaryMaroon,
-              inactiveColor: AppColors.surfaceCreamDim,
-              onChanged: (val) {
-                controller.minPartnerSalary.value = val;
-              },
-            )),
+        Obx(
+          () => Slider(
+            value: controller.minPartnerSalary.value,
+            min: 0,
+            max: 100,
+            activeColor: AppColors.primaryMaroon,
+            inactiveColor: AppColors.surfaceCreamDim,
+            onChanged: (val) {
+              controller.minPartnerSalary.value = val;
+            },
+          ),
+        ),
       ],
     );
   }

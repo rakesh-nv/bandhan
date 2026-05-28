@@ -67,7 +67,7 @@ class ProfileDetailsScreen extends StatelessWidget {
                         context,
                         title: 'About Me',
                         child: Text(
-                          profile.bio,
+                          profile.bio ?? 'No bio provided.',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 color: AppColors.textDark,
                                 height: 1.4,
@@ -81,12 +81,12 @@ class ProfileDetailsScreen extends StatelessWidget {
                         context,
                         title: 'Basic Details',
                         child: _buildDetailsGrid([
-                          _buildDetailItem('Religion', profile.religion),
-                          _buildDetailItem('Community', profile.community),
-                          _buildDetailItem('Mother Tongue', profile.motherTongue),
-                          _buildDetailItem('Marital Status', profile.maritalStatus.name.replaceAll('neverMarried', 'Never Married').capitalizeFirst!),
-                          _buildDetailItem('Height', '${profile.height.toInt()} cm'),
-                          _buildDetailItem('Weight', '${profile.weight.toInt()} kg'),
+                          _buildDetailItem('Religion', profile.religion ?? 'Not specified'),
+                          _buildDetailItem('Community', profile.community ?? 'Not specified'),
+                          _buildDetailItem('Caste', profile.caste ?? 'Not specified'),
+                          _buildDetailItem('Gender', (profile.gender ?? 'Not specified').capitalizeFirst!),
+                          _buildDetailItem('Age', '${profile.age ?? 25} years'),
+                          _buildDetailItem('Verification', profile.isVerified ? 'Verified' : 'Pending Verification'),
                         ]),
                       ),
                       const SizedBox(height: 24),
@@ -96,25 +96,13 @@ class ProfileDetailsScreen extends StatelessWidget {
                         context,
                         title: 'Education & Career',
                         child: _buildDetailsGrid([
-                          _buildDetailItem('Education', profile.education),
-                          _buildDetailItem('Profession', profile.profession),
-                          _buildDetailItem('Annual Salary', '₹${profile.salary} LPA'),
-                          _buildDetailItem('Current City', profile.location),
+                          _buildDetailItem('Education', profile.education ?? 'Not specified'),
+                          _buildDetailItem('Profession', profile.profession ?? 'Not specified'),
+                          _buildDetailItem('Company Name', profile.companyName ?? 'Not specified'),
+                          _buildDetailItem('Current City', profile.city ?? 'Not specified'),
+                          _buildDetailItem('State', profile.state ?? 'Not specified'),
+                          _buildDetailItem('Country', profile.country ?? 'Not specified'),
                         ]),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Family details
-                      _buildInfoBlock(
-                        context,
-                        title: 'Family Information',
-                        child: Text(
-                          profile.familyDetails,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppColors.textDark,
-                                height: 1.4,
-                              ),
-                        ),
                       ),
                       const SizedBox(height: 24),
 
@@ -123,11 +111,10 @@ class ProfileDetailsScreen extends StatelessWidget {
                         context,
                         title: 'Partner Preferences',
                         child: _buildDetailsGrid([
-                          _buildDetailItem('Age Bracket', '${profile.partnerPreferences.minAge} - ${profile.partnerPreferences.maxAge} years'),
-                          _buildDetailItem('Height Bracket', '${profile.partnerPreferences.minHeight.toInt()} - ${profile.partnerPreferences.maxHeight.toInt()} cm'),
-                          _buildDetailItem('Preferred Religions', profile.partnerPreferences.religions.isEmpty ? 'Any' : profile.partnerPreferences.religions.join(', ')),
-                          _buildDetailItem('Preferred Caste', profile.partnerPreferences.communities.isEmpty ? 'Any' : profile.partnerPreferences.communities.join(', ')),
-                          _buildDetailItem('Min Salary Prefer', '₹${profile.partnerPreferences.minSalary} LPA'),
+                          _buildDetailItem('Preferred Community', profile.community ?? 'Any'),
+                          _buildDetailItem('Preferred Religion', profile.religion ?? 'Any'),
+                          _buildDetailItem('Preferred Education', profile.education ?? 'Any'),
+                          _buildDetailItem('Preferred Profession', profile.profession ?? 'Any'),
                         ]),
                       ),
                       
@@ -155,6 +142,7 @@ class ProfileDetailsScreen extends StatelessWidget {
   Widget _buildPhotoGallery(BuildContext context, ProfileDetailsController controller) {
     final profile = controller.profile;
     final double screenHeight = MediaQuery.of(context).size.height;
+    final photoUrl = profile.profilePhoto ?? '';
 
     return Stack(
       children: [
@@ -163,59 +151,25 @@ class ProfileDetailsScreen extends StatelessWidget {
           height: screenHeight * 0.5,
           child: PageView.builder(
             onPageChanged: (index) => controller.activePhotoIndex.value = index,
-            itemCount: profile.photoUrls.length,
+            itemCount: 1,
             itemBuilder: (context, index) {
-              final url = profile.photoUrls[index];
-              // Image blur lock condition
-              final bool shouldBlur = profile.photosLocked &&
-                  !(controller.dbService.currentUser.value?.isPremium ?? false);
-
-              return CachedNetworkImage(
-                imageUrl: url,
-                fit: BoxFit.cover,
-                imageBuilder: (context, imageProvider) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: imageProvider,
-                        fit: BoxFit.cover,
+              return photoUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: photoUrl,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => Container(
+                        color: AppColors.surfaceCreamHigh,
+                        child: const Center(
+                          child: Icon(Icons.person, size: 80, color: AppColors.primaryMaroon),
+                        ),
                       ),
-                    ),
-                    child: shouldBlur
-                        ? ClipRect(
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                              child: Container(
-                                color: Colors.black.withOpacity(0.3),
-                                child: Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(Icons.lock, color: Colors.white, size: 54),
-                                      const SizedBox(height: 12),
-                                      const Text(
-                                        'Photos Locked for Free Plans',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      ElevatedButton(
-                                        onPressed: () => Get.toNamed(AppRoutes.subscription),
-                                        child: const Text('Upgrade to Premium'),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          )
-                        : null,
-                  );
-                },
-              );
+                    )
+                  : Container(
+                      color: AppColors.surfaceCreamHigh,
+                      child: const Center(
+                        child: Icon(Icons.person, size: 80, color: AppColors.primaryMaroon),
+                      ),
+                    );
             },
           ),
         ),
@@ -227,18 +181,17 @@ class ProfileDetailsScreen extends StatelessWidget {
           right: 0,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              profile.photoUrls.length,
-              (index) => Obx(() => Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: controller.activePhotoIndex.value == index ? 20 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: controller.activePhotoIndex.value == index ? Colors.white : Colors.white54,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  )),
-            ),
+            children: [
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: 20,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              )
+            ],
           ),
         ),
       ],
@@ -258,7 +211,7 @@ class ProfileDetailsScreen extends StatelessWidget {
                 children: [
                   Flexible(
                     child: Text(
-                      profile.name,
+                      profile.fullName ?? 'User',
                       style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: AppColors.primaryMaroon,
@@ -274,7 +227,7 @@ class ProfileDetailsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                '${profile.age} yrs • ${profile.maritalStatus.name.replaceAll("neverMarried", "Never Married").capitalizeFirst!} • ${profile.location}',
+                '${profile.age} yrs • ${profile.religion ?? 'Not specified'} • ${profile.city ?? 'Not specified'}',
                 style: const TextStyle(color: AppColors.textDarkMuted, fontSize: 14),
               ),
             ],

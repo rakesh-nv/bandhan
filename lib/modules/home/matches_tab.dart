@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'hub_controller.dart';
 import '../../core/constants.dart';
-import '../../models/models.dart';
+import '../../models/interest_model.dart';
 import '../../routes/routes.dart';
 
 class MatchesTab extends StatelessWidget {
@@ -10,8 +10,6 @@ class MatchesTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<HubController>();
-
     return DefaultTabController(
       length: 3,
       child: Column(
@@ -64,6 +62,8 @@ class MatchesTab extends StatelessWidget {
         final interest = list[index];
         final profile = interest.otherProfile;
 
+        if (profile == null) return const SizedBox.shrink();
+
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: Padding(
@@ -72,7 +72,7 @@ class MatchesTab extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundImage: NetworkImage(profile.photoUrls.first),
+                  backgroundImage: NetworkImage(profile.profilePhoto ?? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&fit=crop&q=80'),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -80,12 +80,12 @@ class MatchesTab extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        profile.name,
+                        profile.fullName ?? 'User',
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${profile.age} yrs • ${profile.profession}',
+                        '${profile.age ?? 25} yrs • ${profile.profession ?? "Not specified"}',
                         style: const TextStyle(fontSize: 12, color: AppColors.textDarkMuted),
                       ),
                     ],
@@ -94,7 +94,7 @@ class MatchesTab extends StatelessWidget {
                 // Accept/Reject Actions
                 IconButton(
                   icon: const Icon(Icons.check_circle, color: Colors.green, size: 28),
-                  onPressed: () => ctrl.acceptInterest(interest.id),
+                  onPressed: () => ctrl.acceptInterest(interest),
                 ),
                 IconButton(
                   icon: const Icon(Icons.cancel, color: Colors.redAccent, size: 28),
@@ -123,6 +123,8 @@ class MatchesTab extends StatelessWidget {
         final interest = list[index];
         final profile = interest.otherProfile;
 
+        if (profile == null) return const SizedBox.shrink();
+
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: Padding(
@@ -131,7 +133,7 @@ class MatchesTab extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundImage: NetworkImage(profile.photoUrls.first),
+                  backgroundImage: NetworkImage(profile.profilePhoto ?? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&fit=crop&q=80'),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -139,18 +141,18 @@ class MatchesTab extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        profile.name,
+                        profile.fullName ?? 'User',
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Status: ${interest.status.name.toUpperCase()}',
+                        'Status: ${interest.status.toUpperCase()}',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: interest.status == InterestStatus.accepted
+                          color: interest.status == 'accepted'
                               ? Colors.green
-                              : interest.status == InterestStatus.pending
+                              : interest.status == 'pending'
                                   ? AppColors.secondaryGold
                                   : Colors.grey,
                         ),
@@ -159,10 +161,10 @@ class MatchesTab extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  interest.status == InterestStatus.accepted
+                  interest.status == 'accepted'
                       ? Icons.check_circle_outline
                       : Icons.hourglass_top_outlined,
-                  color: interest.status == InterestStatus.accepted ? Colors.green : AppColors.secondaryGold,
+                  color: interest.status == 'accepted' ? Colors.green : AppColors.secondaryGold,
                 )
               ],
             ),
@@ -187,6 +189,8 @@ class MatchesTab extends StatelessWidget {
         final interest = list[index];
         final profile = interest.otherProfile;
 
+        if (profile == null) return const SizedBox.shrink();
+
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: Padding(
@@ -195,7 +199,7 @@ class MatchesTab extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundImage: NetworkImage(profile.photoUrls.first),
+                  backgroundImage: NetworkImage(profile.profilePhoto ?? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&fit=crop&q=80'),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -203,7 +207,7 @@ class MatchesTab extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        profile.name,
+                        profile.fullName ?? 'User',
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                       const SizedBox(height: 4),

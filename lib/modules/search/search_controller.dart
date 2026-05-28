@@ -1,13 +1,11 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../models/models.dart';
-import '../../services/supabase_service.dart';
+import '../../models/profile_model.dart';
+import '../../controllers/discover_controller.dart';
 
 class SearchController extends GetxController {
-  final SupabaseService _dbService = Get.find<SupabaseService>();
-  SupabaseService get dbService => _dbService;
+  final DiscoverController _discoverCtrl = Get.find<DiscoverController>();
 
-  final RxList<UserProfile> searchResults = <UserProfile>[].obs;
+  final RxList<ProfileModel> searchResults = <ProfileModel>[].obs;
   final RxBool isLoading = false.obs;
 
   // View state
@@ -61,49 +59,35 @@ class SearchController extends GetxController {
 
   Future<void> applyFilters() async {
     isLoading.value = true;
-    await Future.delayed(const Duration(milliseconds: 500)); // Mock latency
+    
+    // Instead of filtering locally, we could call the repository here. 
+    // For now, let's trigger DiscoverController to fetch with new filters, 
+    // or just filter whatever DiscoverController has already fetched.
+    
+    _discoverCtrl.setFilters(
+      minAge: minAge.value.toInt(),
+      maxAge: maxAge.value.toInt(),
+    );
+    
+    // Wait for discover controller to finish loading
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    var filtered = _discoverCtrl.discoverProfiles.toList();
 
-    final currentUser = _dbService.currentUser.value;
-    final targetGender = currentUser?.gender == Gender.male ? Gender.female : Gender.male;
-
-    // Start with all profiles of opposite gender
-    var filtered = _dbService.mockProfiles.where((p) => p.gender == targetGender && p.id != currentUser?.id).toList();
-
-    // Age Filter
-    filtered = filtered.where((p) => p.age >= minAge.value && p.age <= maxAge.value).toList();
-
-    // Height Filter
-    filtered = filtered.where((p) => p.height >= minHeight.value && p.height <= maxHeight.value).toList();
-
-    // Salary Filter
-    filtered = filtered.where((p) => p.salary >= minSalary.value).toList();
-
-    // Religion Filter
+    // Additional local filters not supported by DiscoverController yet
     if (religion.value != 'All') {
-      filtered = filtered.where((p) => p.religion.toLowerCase() == religion.value.toLowerCase()).toList();
+      filtered = filtered.where((p) => p.religion?.toLowerCase() == religion.value.toLowerCase()).toList();
     }
 
-    // Community Filter
     if (community.value != 'All') {
-      filtered = filtered.where((p) => p.community.toLowerCase().contains(community.value.toLowerCase())).toList();
-    }
-
-    // Marital Status Filter
-    if (maritalStatus.value != 'All') {
-      filtered = filtered.where((p) {
-        String statusLabel = 'Never Married';
-        if (p.maritalStatus == MaritalStatus.divorced) statusLabel = 'Divorced';
-        if (p.maritalStatus == MaritalStatus.widowed) statusLabel = 'Widowed';
-        if (p.maritalStatus == MaritalStatus.awaitingDivorce) statusLabel = 'Awaiting Divorce';
-        return statusLabel == maritalStatus.value;
-      }).toList();
+      filtered = filtered.where((p) => (p.community ?? '').toLowerCase().contains(community.value.toLowerCase())).toList();
     }
 
     // Sorting
     if (sortBy.value == 'age') {
-      filtered.sort((a, b) => a.age.compareTo(b.age));
+      filtered.sort((a, b) => (a.age ?? 0).compareTo(b.age ?? 0));
     } else if (sortBy.value == 'recentlyJoined') {
-      filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      filtered.sort((a, b) => (b.createdAt ?? DateTime.now()).compareTo(a.createdAt ?? DateTime.now()));
     }
 
     searchResults.assignAll(filtered);

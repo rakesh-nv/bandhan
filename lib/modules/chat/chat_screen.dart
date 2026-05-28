@@ -4,9 +4,10 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants.dart';
-import '../../models/models.dart';
+import '../../models/profile_model.dart';
 import '../../widgets/chat_bubble.dart';
 import '../../routes/routes.dart';
+import '../../controllers/profile_controller.dart';
 import 'chat_controller.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -20,12 +21,12 @@ class _ChatScreenState extends State<ChatScreen> {
   final ChatController controller = Get.find<ChatController>();
   final TextEditingController textEditingController = TextEditingController();
   final ScrollController scrollController = ScrollController();
-  late UserProfile otherUser;
+  late ProfileModel otherUser;
 
   @override
   void initState() {
     super.initState();
-    otherUser = Get.arguments as UserProfile;
+    otherUser = Get.arguments as ProfileModel;
     controller.loadChatMessages(otherUser.id);
     
     // Scroll to bottom after frame rendering
@@ -60,8 +61,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUserPremium = controller.dbService.currentUser.value?.isPremium ?? false;
-    final blurImage = otherUser.photosLocked && !currentUserPremium;
+    final ProfileController profileCtrl = Get.find<ProfileController>();
+    final currentUserPremium = profileCtrl.currentProfile.value?.isPremium ?? false;
+    final blurImage = false; // Photos are never locked in ProfileModel
 
     return Scaffold(
       backgroundColor: AppColors.surfaceCream,
@@ -87,9 +89,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(19),
                   child: CachedNetworkImage(
-                    imageUrl: otherUser.photoUrls.isNotEmpty
-                        ? otherUser.photoUrls.first
-                        : AppPlaceholderImages.avatarFemale1,
+                    imageUrl: otherUser.profilePhoto ?? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&fit=crop&q=80',
                     fit: BoxFit.cover,
                     width: 38,
                     height: 38,
@@ -116,7 +116,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       children: [
                         Flexible(
                           child: Text(
-                            otherUser.name,
+                            otherUser.fullName ?? 'User',
                             style: GoogleFonts.plusJakartaSans(
                               color: AppColors.textDark,
                               fontWeight: FontWeight.bold,
@@ -144,9 +144,9 @@ class _ChatScreenState extends State<ChatScreen> {
                         );
                       }
                       return Text(
-                        otherUser.id == 'usr_2' ? 'Online' : 'Active 2h ago',
+                        'Active now',
                         style: GoogleFonts.inter(
-                          color: otherUser.id == 'usr_2' ? AppColors.activeGreen : AppColors.textDarkMuted,
+                          color: AppColors.textDarkMuted,
                           fontSize: 11,
                         ),
                       );
@@ -164,7 +164,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 _showKundaliDialog();
               } else if (value == 'block') {
                 Get.back();
-                Get.snackbar('Blocked', '${otherUser.name} has been blocked.',
+                Get.snackbar('Blocked', '${otherUser.fullName ?? 'User'} has been blocked.',
                     backgroundColor: AppColors.textDark, colorText: Colors.white);
               } else if (value == 'report') {
                 _showReportDialog();
@@ -221,7 +221,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 const Icon(Icons.favorite, color: AppColors.primaryMaroon, size: 14),
                 const SizedBox(width: 6),
                 Text(
-                  'Community Compatibility: 96% Match (${otherUser.religion} - ${otherUser.community})',
+                  'Community Compatibility: 96% Match (${otherUser.religion ?? 'Not specified'} - ${otherUser.community ?? 'Not specified'})',
                   style: GoogleFonts.inter(
                     color: AppColors.primaryMaroon,
                     fontSize: 11,
@@ -280,7 +280,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 itemCount: controller.currentChatMessages.length,
                 itemBuilder: (context, index) {
                   final msg = controller.currentChatMessages[index];
-                  final isMe = msg.senderId == 'usr_curr';
+                  final isMe = msg.senderId != otherUser.id;
                   return ChatBubble(message: msg, isMe: isMe);
                 },
               );
@@ -297,7 +297,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: Row(
                   children: [
                     Text(
-                      '${otherUser.name} is typing',
+                      '${otherUser.fullName ?? 'User'} is typing',
                       style: GoogleFonts.inter(
                         color: AppColors.textDarkMuted,
                         fontSize: 12,
@@ -439,7 +439,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   color: Colors.orange,
                   onTap: () {
                     Get.back();
-                    // Mock send venue image
                     controller.sendMediaMessage('https://images.unsplash.com/photo-1519741497674-611481863552?w=500&fit=crop&q=80');
                   },
                 ),
@@ -449,7 +448,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   color: Colors.blue,
                   onTap: () {
                     Get.back();
-                    // Mock send ring image
                     controller.sendMediaMessage('https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?w=500&fit=crop&q=80');
                   },
                 ),

@@ -4,13 +4,13 @@ import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/constants.dart';
-import '../models/models.dart';
+import '../models/profile_model.dart';
 import 'premium_badge.dart';
 import 'interest_button.dart';
-import '../services/supabase_service.dart';
+import '../controllers/profile_controller.dart';
 
 class ProfileCard extends StatelessWidget {
-  final UserProfile profile;
+  final ProfileModel profile;
   final VoidCallback? onTap;
   final Future<void> Function() onSendInterest;
   final bool initialSent;
@@ -25,7 +25,7 @@ class ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final SupabaseService dbService = Get.find<SupabaseService>();
+    final ProfileController profileCtrl = Get.find<ProfileController>();
 
     return Card(
       elevation: 3,
@@ -44,7 +44,7 @@ class ProfileCard extends StatelessWidget {
                 AspectRatio(
                   aspectRatio: 4 / 3,
                   child: CachedNetworkImage(
-                    imageUrl: profile.photoUrls.first,
+                    imageUrl: profile.profilePhoto ?? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&fit=crop&q=80',
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Container(
                       color: AppColors.surfaceCreamDim.withOpacity(0.3),
@@ -57,9 +57,8 @@ class ProfileCard extends StatelessWidget {
                       child: const Icon(Icons.person, size: 50, color: Colors.grey),
                     ),
                     imageBuilder: (context, imageProvider) {
-                      // Apply blur filter if photo is locked and current user is not premium
-                      final bool shouldBlur = profile.photosLocked &&
-                          !(dbService.currentUser.value?.isPremium ?? false);
+                      // Photos are never locked in ProfileModel
+                      final bool shouldBlur = false;
 
                       return Container(
                         decoration: BoxDecoration(
@@ -144,7 +143,7 @@ class ProfileCard extends StatelessWidget {
                               children: [
                                 Flexible(
                                   child: Text(
-                                    '${profile.name}, ${profile.age}',
+                                    '${profile.fullName ?? 'User'}, ${profile.age ?? 25}',
                                     style: GoogleFonts.plusJakartaSans(
                                       color: Colors.white,
                                       fontSize: 22,
@@ -161,7 +160,7 @@ class ProfileCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${profile.religion} • ${profile.community}',
+                              '${profile.religion ?? 'Not specified'} • ${profile.community ?? 'Not specified'}',
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 13,
@@ -190,7 +189,7 @@ class ProfileCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          profile.profession,
+                          profile.profession ?? 'Not specified',
                           style: TextStyle(
                             color: AppColors.textDarkMuted,
                             fontSize: 14,
@@ -201,7 +200,7 @@ class ProfileCard extends StatelessWidget {
                       const Icon(Icons.location_on_outlined, size: 14, color: AppColors.secondaryGold),
                       const SizedBox(width: 4),
                       Text(
-                        profile.location.split(',').first,
+                        (profile.city ?? 'Not specified').split(',').first,
                         style: TextStyle(
                           color: AppColors.textDarkMuted,
                           fontSize: 14,
@@ -216,10 +215,12 @@ class ProfileCard extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 4,
                     children: [
-                      _buildChip(profile.education.split(',').first),
-                      _buildChip(profile.motherTongue),
-                      _buildChip('${profile.height.toInt()} cm'),
-                      _buildChip('₹${profile.salary} LPA'),
+                      _buildChip(profile.education?.split(',').first ?? 'Not specified'),
+                      _buildChip(profile.religion ?? 'Not specified'),
+                      if (profile.caste != null && profile.caste!.isNotEmpty)
+                        _buildChip(profile.caste!),
+                      if (profile.state != null && profile.state!.isNotEmpty)
+                        _buildChip(profile.state!),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -240,8 +241,8 @@ class ProfileCard extends StatelessWidget {
                       ),
                       InterestButton(
                         profileId: profile.id,
-                        profileName: profile.name,
-                        profilePhotoUrl: profile.photoUrls.first,
+                        profileName: profile.fullName ?? 'User',
+                        profilePhotoUrl: profile.profilePhoto ?? '',
                         initialSent: initialSent,
                         onSendInterest: onSendInterest,
                       ),

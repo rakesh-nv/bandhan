@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../core/constants.dart';
-import '../models/models.dart';
+import '../models/profile_model.dart';
 import 'premium_badge.dart';
 
 class MatchCard extends StatelessWidget {
-  final UserProfile profile;
+  final ProfileModel profile;
   final VoidCallback? onTap;
 
   const MatchCard({
@@ -29,7 +29,7 @@ class MatchCard extends StatelessWidget {
               child: Stack(
                 children: [
                   CachedNetworkImage(
-                    imageUrl: profile.photoUrls.first,
+                    imageUrl: profile.profilePhoto ?? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&fit=crop&q=80',
                     fit: BoxFit.cover,
                     width: double.infinity,
                     height: double.infinity,
@@ -63,7 +63,7 @@ class MatchCard extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        '${profile.name.split(" ").first}, ${profile.age}',
+                        '${(profile.fullName ?? 'User').split(" ").first}, ${profile.age ?? 25}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
@@ -82,7 +82,7 @@ class MatchCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    profile.profession,
+                    profile.profession ?? 'Not specified',
                     style: TextStyle(
                       color: AppColors.textDark,
                       fontSize: 11,
@@ -93,7 +93,7 @@ class MatchCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${profile.religion} • ${profile.community}',
+                    '${profile.religion ?? 'Not specified'} • ${profile.community ?? 'Not specified'}',
                     style: TextStyle(
                       color: AppColors.textDarkMuted,
                       fontSize: 10,

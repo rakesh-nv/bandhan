@@ -134,7 +134,7 @@ class RecommendationsTab extends GetView<HubController> {
                                 ClipRRect(
                                   borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
                                   child: Image.network(
-                                    profile.photoUrls.first,
+                                    profile.profilePhoto ?? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&fit=crop&q=80',
                                     fit: BoxFit.cover,
                                     height: 80,
                                     width: double.infinity,
@@ -142,12 +142,12 @@ class RecommendationsTab extends GetView<HubController> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  profile.name.split(' ').first,
+                                  (profile.fullName ?? 'User').split(' ').first,
                                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
-                                  '${profile.age} yrs • ${profile.community.split(' ').first}',
+                                  '${profile.age ?? 25} yrs • ${(profile.community ?? 'Not specified').split(' ').first}',
                                   style: const TextStyle(fontSize: 10, color: AppColors.textDarkMuted),
                                   overflow: TextOverflow.ellipsis,
                                 ),

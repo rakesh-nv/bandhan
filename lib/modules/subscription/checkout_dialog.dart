@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants.dart';
-import '../../services/supabase_service.dart';
+import '../../controllers/subscription_controller.dart';
+import '../../controllers/profile_controller.dart';
 
 class CheckoutDialog extends StatefulWidget {
   final String planName;
@@ -19,7 +20,6 @@ class CheckoutDialog extends StatefulWidget {
 }
 
 class _CheckoutDialogState extends State<CheckoutDialog> {
-  final SupabaseService dbService = Get.find<SupabaseService>();
   final _formKey = GlobalKey<FormState>();
   
   String selectedMethod = 'card'; // 'card' or 'upi'
@@ -57,12 +57,25 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
     // Simulate gateway delay
     await Future.delayed(const Duration(seconds: 2));
 
-    // Update state to premium in backend mock
-    await dbService.activatePremium(widget.planName);
+    final priceStr = widget.price.replaceAll(RegExp(r'[^0-9]'), '');
+    final amount = double.tryParse(priceStr) ?? 1499.0;
+
+    final subCtrl = Get.find<SubscriptionController>();
+    final profileCtrl = Get.find<ProfileController>();
+    
+    final success = await subCtrl.upgradePremium(widget.planName, amount);
+    if (success) {
+      await profileCtrl.fetchCurrentProfile();
+      setState(() {
+        isSuccess = true;
+      });
+    } else {
+      Get.snackbar('Payment Failed', 'An error occurred during payment processing.',
+          backgroundColor: AppColors.errorRed, colorText: Colors.white);
+    }
 
     setState(() {
       isProcessing = false;
-      isSuccess = true;
     });
   }
 

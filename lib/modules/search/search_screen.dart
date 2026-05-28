@@ -6,6 +6,7 @@ import '../../widgets/match_card.dart';
 import '../../widgets/profile_card.dart';
 import '../../widgets/loading_skeleton.dart';
 import '../../routes/routes.dart';
+import '../../controllers/interest_controller.dart';
 import 'search_controller.dart' as app_search;
 
 class SearchScreen extends StatelessWidget {
@@ -152,9 +153,8 @@ class SearchScreen extends StatelessWidget {
 
   // Stub function to trigger interest from controller
   Future<void> ctrlSendInterest(String id) async {
-    final searchCtrl = Get.find<app_search.SearchController>();
-    // Call interest api
-    await searchCtrl.dbService.sendInterest(id);
+    final interestCtrl = Get.find<InterestController>();
+    await interestCtrl.sendInterest(id);
   }
 
   Widget _buildFilterChip(String label) {

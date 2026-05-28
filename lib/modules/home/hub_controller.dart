@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../models/models.dart';
-import '../../services/supabase_service.dart';
+import '../../models/profile_model.dart';
+import '../../models/interest_model.dart';
+import '../../controllers/discover_controller.dart';
+import '../../controllers/interest_controller.dart';
+import '../../controllers/match_controller.dart';
+import '../../services/auth_service.dart';
 
 class HubController extends GetxController {
-  final SupabaseService dbService = Get.find<SupabaseService>();
+  final DiscoverController _discoverCtrl = Get.find<DiscoverController>();
+  final InterestController _interestCtrl = Get.find<InterestController>();
+  final MatchController _matchCtrl = Get.find<MatchController>();
+  final AuthService _authService = Get.find<AuthService>();
 
   final RxInt activeTabIndex = 0.obs;
   final RxInt carouselIndex = 0.obs;
   
-  // Carousel images and text
+  // Carousel banners
   final List<Map<String, String>> banners = [
     {
       'title': 'Bandhan Premium',
@@ -24,11 +31,10 @@ class HubController extends GetxController {
   ];
 
   // Recommendations streams
-  final RxList<UserProfile> recommendations = <UserProfile>[].obs;
-  final RxList<UserProfile> verifiedProfiles = <UserProfile>[].obs;
-  final RxList<UserProfile> nearbyMatches = <UserProfile>[].obs;
+  final RxList<ProfileModel> recommendations = <ProfileModel>[].obs;
+  final RxList<ProfileModel> verifiedProfiles = <ProfileModel>[].obs;
+  final RxList<ProfileModel> nearbyMatches = <ProfileModel>[].obs;
   
-  // Loading indicators
   final RxBool isLoadingFeed = false.obs;
 
   @override
@@ -39,55 +45,49 @@ class HubController extends GetxController {
 
   Future<void> loadFeeds() async {
     isLoadingFeed.value = true;
-    await Future.delayed(const Duration(seconds: 1)); // Mock latency
-    
-    // Sort and filter recommendations based on gender & basic preferences
-    final curr = dbService.currentUser.value;
-    final targetGender = curr?.gender == Gender.male ? Gender.female : Gender.male;
-    
-    final matches = dbService.mockProfiles.where((p) => p.gender == targetGender && p.id != curr?.id).toList();
-    
-    recommendations.assignAll(matches);
-    verifiedProfiles.assignAll(matches.where((p) => p.isVerified).toList());
-    nearbyMatches.assignAll(matches.where((p) => p.location.contains('Mumbai')).toList());
-    
-    isLoadingFeed.value = false;
+    try {
+      await _discoverCtrl.fetchInitialProfiles();
+      
+      final list = _discoverCtrl.discoverProfiles;
+      recommendations.assignAll(list);
+      verifiedProfiles.assignAll(list.where((p) => p.isVerified).toList());
+      nearbyMatches.assignAll(list.where((p) => (p.city ?? '').toLowerCase().contains('mumbai')).toList());
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to load recommendations');
+    } finally {
+      isLoadingFeed.value = false;
+    }
   }
 
   Future<void> sendInterest(String targetUserId) async {
-    await dbService.sendInterest(targetUserId);
-    // Refresh local lists if needed
+    await _interestCtrl.sendInterest(targetUserId);
   }
 
   bool isInterestSent(String targetUserId) {
-    return dbService.mockInterests.any((interest) =>
-        interest.senderId == 'usr_curr' && interest.receiverId == targetUserId);
+    return _interestCtrl.sentInterests.any((interest) =>
+        interest.receiverId == targetUserId);
   }
 
-  // Handle Interest tab lists
-  List<Interest> get receivedInterests => dbService.mockInterests
-      .where((i) => i.receiverId == 'usr_curr' && i.status == InterestStatus.pending)
-      .toList();
+  // Handle Interest lists by delegating to InterestController
+  List<InterestModel> get receivedInterests => _interestCtrl.receivedInterests;
+  List<InterestModel> get sentInterests => _interestCtrl.sentInterests;
+  List<InterestModel> get acceptedInterests => _interestCtrl.acceptedInterests;
 
-  List<Interest> get sentInterests => dbService.mockInterests
-      .where((i) => i.senderId == 'usr_curr')
-      .toList();
-
-  List<Interest> get acceptedInterests => dbService.mockInterests
-      .where((i) => (i.senderId == 'usr_curr' || i.receiverId == 'usr_curr') && i.status == InterestStatus.accepted)
-      .toList();
-
-  void acceptInterest(String interestId) async {
-    await dbService.acceptInterest(interestId);
-    Get.snackbar('Success', 'Interest Accepted! You can now chat.',
-        backgroundColor: Colors.green, colorText: Colors.white);
+  void acceptInterest(InterestModel interest) async {
+    final success = await _interestCtrl.acceptInterest(interest);
+    if (success) {
+      Get.snackbar('Success', 'Interest Accepted! You can now chat.',
+          backgroundColor: Colors.green, colorText: Colors.white);
+    }
     update();
   }
 
   void rejectInterest(String interestId) async {
-    await dbService.rejectInterest(interestId);
-    Get.snackbar('Declined', 'Interest declined.',
-        backgroundColor: Colors.orange, colorText: Colors.white);
+    final success = await _interestCtrl.rejectInterest(interestId);
+    if (success) {
+      Get.snackbar('Declined', 'Interest declined.',
+          backgroundColor: Colors.orange, colorText: Colors.white);
+    }
     update();
   }
 }

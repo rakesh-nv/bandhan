@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants.dart';
-import '../../services/supabase_service.dart';
 import '../../routes/routes.dart';
+import '../../controllers/profile_controller.dart';
+import '../../modules/auth/auth_controller.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class SettingsTab extends StatefulWidget {
   const SettingsTab({super.key});
@@ -13,8 +15,6 @@ class SettingsTab extends StatefulWidget {
 }
 
 class _SettingsTabState extends State<SettingsTab> {
-  final SupabaseService dbService = Get.find<SupabaseService>();
-  
   // Local state for toggles
   bool hideNumber = true;
   bool blurPhotos = false;
@@ -26,6 +26,8 @@ class _SettingsTabState extends State<SettingsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final authCtrl = Get.find<AuthController>();
+
     return Scaffold(
       backgroundColor: AppColors.surfaceCream,
       body: SingleChildScrollView(
@@ -33,6 +35,7 @@ class _SettingsTabState extends State<SettingsTab> {
         child: Column(
           children: [
             _buildProfileSection(),
+            _buildGalleryPreviewSection(),
             const SizedBox(height: 16),
             _buildPremiumStatusCard(),
             const SizedBox(height: 16),
@@ -117,7 +120,7 @@ class _SettingsTabState extends State<SettingsTab> {
                   icon: Icons.logout,
                   title: 'Logout',
                   onTap: () {
-                    Get.offAllNamed(AppRoutes.login);
+                    authCtrl.logout();
                   },
                 ),
               ],
@@ -130,70 +133,106 @@ class _SettingsTabState extends State<SettingsTab> {
   }
 
   Widget _buildProfileSection() {
+    final profileCtrl = Get.find<ProfileController>();
+
     return Obx(() {
-      final user = dbService.currentUser.value;
+      final user = profileCtrl.currentProfile.value;
       if (user == null) return const SizedBox.shrink();
       
-      return Container(
-        width: double.infinity,
-        color: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: AppColors.surfaceCreamHigh,
-              backgroundImage: user.photoUrls.isNotEmpty ? NetworkImage(user.photoUrls.first) : null,
-              child: user.photoUrls.isEmpty ? const Icon(Icons.person, size: 40, color: AppColors.primaryMaroon) : null,
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        user.name,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          color: AppColors.textDark,
-                        ),
-                      ),
-                      if (user.isVerified) ...[
-                        const SizedBox(width: 6),
-                        const Icon(Icons.verified, color: Colors.blue, size: 18),
-                      ]
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${user.age} yrs • ${user.profession}',
-                    style: GoogleFonts.inter(
-                      color: AppColors.textDarkMuted,
-                      fontSize: 13,
-                    ),
-                  ),
-                  Text(
-                    user.location,
-                    style: GoogleFonts.inter(
-                      color: AppColors.textDarkMuted,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
+      return InkWell(
+        onTap: () => Get.toNamed(AppRoutes.editProfile),
+        child: Container(
+          width: double.infinity,
+          color: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+          child: Row(
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.surfaceCreamHigh,
+                ),
+                child: ClipOval(
+                  child: user.profilePhoto != null && user.profilePhoto!.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: user.profilePhoto!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryMaroon),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => const Icon(Icons.person, size: 40, color: AppColors.primaryMaroon),
+                        )
+                      : const Icon(Icons.person, size: 40, color: AppColors.primaryMaroon),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            user.fullName ?? 'User',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              color: AppColors.textDark,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (user.isVerified) ...[
+                          const SizedBox(width: 6),
+                          const Icon(Icons.verified, color: Colors.blue, size: 18),
+                        ]
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${user.age ?? 25} yrs • ${user.profession ?? 'Not specified'}',
+                      style: GoogleFonts.inter(
+                        color: AppColors.textDarkMuted,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      user.city ?? 'Not specified',
+                      style: GoogleFonts.inter(
+                        color: AppColors.textDarkMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryMaroon.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.edit_outlined, color: AppColors.primaryMaroon, size: 20),
+              ),
+            ],
+          ),
         ),
       );
     });
   }
 
   Widget _buildPremiumStatusCard() {
+    final profileCtrl = Get.find<ProfileController>();
+
     return Obx(() {
-      final isPremium = dbService.currentUser.value?.isPremium ?? false;
+      final isPremium = profileCtrl.currentProfile.value?.isPremium ?? false;
 
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -275,8 +314,8 @@ class _SettingsTabState extends State<SettingsTab> {
               fontWeight: FontWeight.bold,
               fontSize: 13,
               letterSpacing: 1.0,
-            ),
           ),
+        ),
         ),
         Container(
           color: Colors.white,
@@ -417,5 +456,87 @@ class _SettingsTabState extends State<SettingsTab> {
         ],
       ),
     );
+  }
+
+  Widget _buildGalleryPreviewSection() {
+    final profileCtrl = Get.find<ProfileController>();
+
+    return Obx(() {
+      final photos = profileCtrl.galleryPhotos;
+      if (photos.isEmpty) return const SizedBox.shrink();
+
+      return Container(
+        width: double.infinity,
+        color: Colors.white,
+        margin: const EdgeInsets.only(top: 2),
+        padding: const EdgeInsets.only(bottom: 20, left: 20, right: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Divider(color: AppColors.surfaceCream, height: 1),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'My Gallery',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                Text(
+                  '${photos.length} / 3 Photos',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: AppColors.textDarkMuted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 80,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: photos.length,
+                itemBuilder: (context, index) {
+                  final photo = photos[index];
+                  return Container(
+                    width: 80,
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.surfaceCreamDim.withOpacity(0.5)),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: CachedNetworkImage(
+                        imageUrl: photo.photoUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: AppColors.surfaceCream,
+                          child: const Center(
+                            child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.primaryMaroon),
+                            ),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => const Icon(Icons.broken_image),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 }

@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../models/models.dart';
-import '../../services/supabase_service.dart';
-import '../../routes/routes.dart';
+import '../../models/profile_model.dart';
+import '../../controllers/interest_controller.dart';
 import '../../core/constants.dart';
 
 class ProfileDetailsController extends GetxController {
-  final SupabaseService _dbService = Get.find<SupabaseService>();
-  SupabaseService get dbService => _dbService;
-
-  late UserProfile profile;
+  late ProfileModel profile;
   
   final RxInt activePhotoIndex = 0.obs;
   final RxBool isShortlisted = false.obs;
@@ -20,19 +16,22 @@ class ProfileDetailsController extends GetxController {
   void onInit() {
     super.onInit();
     // Retrieve profile from arguments
-    profile = Get.arguments as UserProfile;
+    profile = Get.arguments as ProfileModel;
     
     // Check if interest has already been sent
-    isInterestSent.value = _dbService.mockInterests.any((i) =>
-        i.senderId == 'usr_curr' && i.receiverId == profile.id);
+    final interestCtrl = Get.find<InterestController>();
+    isInterestSent.value = interestCtrl.sentInterests.any((i) => i.receiverId == profile.id);
   }
 
   Future<void> sendInterest() async {
     if (isInterestSent.value) return;
 
-    isInterestSent.value = true;
-    await _dbService.sendInterest(profile.id);
-    _showMatchSuccessDialog();
+    final interestCtrl = Get.find<InterestController>();
+    final success = await interestCtrl.sendInterest(profile.id);
+    if (success) {
+      isInterestSent.value = true;
+      _showMatchSuccessDialog();
+    }
   }
 
   void toggleShortlist() {
@@ -40,8 +39,8 @@ class ProfileDetailsController extends GetxController {
     Get.snackbar(
       isShortlisted.value ? 'Shortlisted' : 'Removed',
       isShortlisted.value
-          ? '${profile.name} added to your shortlist.'
-          : '${profile.name} removed from your shortlist.',
+          ? '${profile.fullName ?? 'User'} added to your shortlist.'
+          : '${profile.fullName ?? 'User'} removed from your shortlist.',
       backgroundColor: AppColors.primaryMaroon,
       colorText: Colors.white,
       snackPosition: SnackPosition.BOTTOM,
@@ -74,7 +73,7 @@ class ProfileDetailsController extends GetxController {
       buttonColor: AppColors.primaryMaroon,
       onConfirm: () {
         Get.back();
-        Get.snackbar('User Blocked', '${profile.name} has been blocked.',
+        Get.snackbar('User Blocked', '${profile.fullName ?? 'User'} has been blocked.',
             backgroundColor: Colors.redAccent, colorText: Colors.white);
       },
     );
@@ -121,7 +120,7 @@ class ProfileDetailsController extends GetxController {
               ),
               const SizedBox(height: 12),
               Text(
-                'We have notified ${profile.name}. Once they accept, you will be connected.',
+                'We have notified ${profile.fullName ?? 'User'}. Once they accept, you will be connected.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 14, height: 1.4),
               ),

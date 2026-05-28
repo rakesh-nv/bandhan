@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../core/constants.dart';
-import '../models/models.dart';
+import '../models/message_model.dart';
 
 class ChatBubble extends StatelessWidget {
-  final Message message;
+  final MessageModel message;
   final bool isMe;
 
   const ChatBubble({
@@ -48,54 +48,9 @@ class ChatBubble extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle Media sharing mock UI
-            if (message.mediaUrl != null) ...[
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  message.mediaUrl!,
-                  fit: .cover,
-                  width: double.infinity,
-                  height: 160,
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-            
-            // Audio attachment mock UI
-            if (message.isAudio) ...[
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.play_arrow,
-                    color: isMe ? Colors.white : AppColors.primaryMaroon,
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    width: 120,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: (isMe ? Colors.white : AppColors.primaryMaroon).withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '0:12',
-                    style: TextStyle(
-                      color: isMe ? Colors.white70 : AppColors.textDarkMuted,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-            ],
-
-            if (message.content.isNotEmpty)
+            if (message.message.isNotEmpty)
               Text(
-                message.content,
+                message.message,
                 style: TextStyle(
                   color: isMe ? Colors.white : AppColors.textDark,
                   fontSize: 15,
@@ -110,7 +65,7 @@ class ChatBubble extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
-                  DateFormat('h:mm a').format(message.sentAt),
+                  DateFormat('h:mm a').format(message.createdAt ?? DateTime.now()),
                   style: TextStyle(
                     color: isMe ? Colors.white70 : AppColors.textDarkMuted,
                     fontSize: 10,

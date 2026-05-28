@@ -1,182 +1,155 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../models/models.dart';
-import '../../services/supabase_service.dart';
+
+import '../../controllers/interest_controller.dart';
+import '../../controllers/match_controller.dart';
+import '../../models/chat_room_model.dart';
+import '../../models/message_model.dart';
+import '../../models/profile_model.dart';
+import '../../repositories/chat_repository.dart';
+import '../../repositories/profile_repository.dart';
+import '../../services/auth_service.dart';
 
 class ChatController extends GetxController {
-  final SupabaseService dbService = Get.find<SupabaseService>();
+  final ProfileRepository _profileRepo = Get.find<ProfileRepository>();
+  final ChatRepository _chatRepo = Get.find<ChatRepository>();
+  final AuthService _authService = Get.find<AuthService>();
+  final MatchController _matchCtrl = Get.find<MatchController>();
+  final InterestController _interestCtrl = Get.find<InterestController>();
 
   final RxList<ChatListItem> activeChats = <ChatListItem>[].obs;
-  final RxList<Message> currentChatMessages = <Message>[].obs;
+  final RxList<MessageModel> currentChatMessages = <MessageModel>[].obs;
   final RxBool isTyping = false.obs;
   final RxString activeReceiverId = ''.obs;
+  
+  // Track active chat room
+  ChatRoomModel? activeChatRoom;
 
   @override
   void onInit() {
     super.onInit();
-    // Watch messages and interests in dbService to keep active chats list updated in real-time
-    ever(dbService.mockMessages, (_) => updateActiveChats());
-    ever(dbService.mockInterests, (_) => updateActiveChats());
+    // Keep active chats updated when matches or interests change
+    ever(_matchCtrl.matches, (_) => updateActiveChats());
+    ever(_interestCtrl.acceptedInterests, (_) => updateActiveChats());
     updateActiveChats();
   }
 
-  void updateActiveChats() {
-    // Active chat users are those with accepted interest
-    final acceptedInterests = dbService.mockInterests
-        .where((i) =>
-            (i.senderId == 'usr_curr' || i.receiverId == 'usr_curr') &&
-            i.status == InterestStatus.accepted)
-        .toList();
-
+  Future<void> updateActiveChats() async {
+    if (_authService.currentUserId == null) return;
+    
+    // Active chats are matches
+    await _matchCtrl.fetchMatches();
+    
     final List<ChatListItem> items = [];
-
-    for (var interest in acceptedInterests) {
-      // Find the other user profile
-      final String otherId = interest.senderId == 'usr_curr'
-          ? interest.receiverId
-          : interest.senderId;
+    
+    for (var match in _matchCtrl.matches) {
+      final String otherUserId = match.user1Id == _authService.currentUserId
+          ? match.user2Id
+          : match.user1Id;
+          
+      final otherProfile = await _profileRepo.getProfile(otherUserId);
+      if (otherProfile == null) continue;
       
-      final otherProfile = dbService.mockProfiles.firstWhereOrNull((p) => p.id == otherId) ?? interest.otherProfile;
-
-      // Get messages between current user and other user
-      final chatMessages = dbService.mockMessages
-          .where((m) =>
-              (m.senderId == 'usr_curr' && m.receiverId == otherId) ||
-              (m.senderId == otherId && m.receiverId == 'usr_curr'))
-          .toList();
-
-      chatMessages.sort((a, b) => a.sentAt.compareTo(b.sentAt));
-
-      final lastMessage = chatMessages.isNotEmpty ? chatMessages.last : null;
-      final unreadCount = chatMessages
-          .where((m) => m.senderId == otherId && !m.isRead)
-          .length;
-
-      // Online status mock
-      final bool isOnline = otherId == 'usr_2'; // Priyanka Patil is mock online
+      final room = await _chatRepo.createOrGetChatRoom(match.id);
+      
+      final msgs = await _chatRepo.getMessages(room.id, limit: 1);
+      final lastMessage = msgs.isNotEmpty ? msgs.first : null;
+      
+      // Count unread
+      final allMsgs = await _chatRepo.getMessages(room.id, limit: 50);
+      final unreadCount = allMsgs.where((m) => m.senderId == otherUserId && !m.isRead).length;
       
       items.add(ChatListItem(
         profile: otherProfile,
         lastMessage: lastMessage,
         unreadCount: unreadCount,
-        isOnline: isOnline,
+        isOnline: false,
       ));
     }
-
-    // Sort active chats by last message time
+    
+    // Sort
     items.sort((a, b) {
       if (a.lastMessage == null && b.lastMessage == null) return 0;
       if (a.lastMessage == null) return 1;
       if (b.lastMessage == null) return -1;
-      return b.lastMessage!.sentAt.compareTo(a.lastMessage!.sentAt);
+      return (b.lastMessage!.createdAt ?? DateTime.now())
+          .compareTo(a.lastMessage!.createdAt ?? DateTime.now());
     });
-
+    
     activeChats.assignAll(items);
   }
 
-  void loadChatMessages(String receiverId) {
+  Future<void> loadChatMessages(String receiverId) async {
     activeReceiverId.value = receiverId;
+    if (_authService.currentUserId == null) return;
     
-    // Mark messages from this user as read
-    for (int i = 0; i < dbService.mockMessages.length; i++) {
-      final msg = dbService.mockMessages[i];
-      if (msg.senderId == receiverId && msg.receiverId == 'usr_curr' && !msg.isRead) {
-        dbService.mockMessages[i] = Message(
-          id: msg.id,
-          senderId: msg.senderId,
-          receiverId: msg.receiverId,
-          content: msg.content,
-          sentAt: msg.sentAt,
-          isRead: true,
-          mediaUrl: msg.mediaUrl,
-          isAudio: msg.isAudio,
-        );
-      }
-    }
-
-    _refreshMessageThread(receiverId);
+    // Find matching match
+    final match = _matchCtrl.matches.firstWhereOrNull((m) =>
+        (m.user1Id == _authService.currentUserId && m.user2Id == receiverId) ||
+        (m.user2Id == _authService.currentUserId && m.user1Id == receiverId));
+        
+    if (match == null) return;
+    
+    final room = await _chatRepo.createOrGetChatRoom(match.id);
+    activeChatRoom = room;
+    
+    await _chatRepo.markMessagesAsRead(room.id, receiverId);
+    await _refreshMessageThread(room.id);
   }
 
-  void _refreshMessageThread(String receiverId) {
-    final chatMessages = dbService.mockMessages
-        .where((m) =>
-            (m.senderId == 'usr_curr' && m.receiverId == receiverId) ||
-            (m.senderId == receiverId && m.receiverId == 'usr_curr'))
-        .toList();
-
-    chatMessages.sort((a, b) => a.sentAt.compareTo(b.sentAt));
-    currentChatMessages.assignAll(chatMessages);
+  Future<void> _refreshMessageThread(String chatRoomId) async {
+    final msgs = await _chatRepo.getMessages(chatRoomId);
+    // Reverse to show oldest first in UI
+    currentChatMessages.assignAll(msgs.reversed.toList());
     updateActiveChats();
   }
 
   Future<void> sendTextMessage(String text) async {
-    if (text.trim().isEmpty || activeReceiverId.isEmpty) return;
+    if (text.trim().isEmpty || activeChatRoom == null || _authService.currentUserId == null) return;
 
-    final receiverId = activeReceiverId.value;
-    await dbService.sendMessage(receiverId, text.trim());
-    _refreshMessageThread(receiverId);
-
-    // Auto-simulate other party response
-    _simulateResponse(receiverId, text);
+    final msg = MessageModel(
+      id: '',
+      chatRoomId: activeChatRoom!.id,
+      senderId: _authService.currentUserId!,
+      message: text.trim(),
+    );
+    
+    await _chatRepo.sendMessage(msg);
+    await _refreshMessageThread(activeChatRoom!.id);
   }
 
   Future<void> sendMediaMessage(String mediaUrl) async {
-    if (activeReceiverId.isEmpty) return;
+    if (activeChatRoom == null || _authService.currentUserId == null) return;
     
-    final receiverId = activeReceiverId.value;
-    await dbService.sendMessage(receiverId, '', media: mediaUrl);
-    _refreshMessageThread(receiverId);
+    final msg = MessageModel(
+      id: '',
+      chatRoomId: activeChatRoom!.id,
+      senderId: _authService.currentUserId!,
+      message: '[Shared Image]',
+    );
     
-    _simulateResponse(receiverId, "[Shared an Image]");
+    await _chatRepo.sendMessage(msg);
+    await _refreshMessageThread(activeChatRoom!.id);
   }
 
   Future<void> sendAudioMessage() async {
-    if (activeReceiverId.isEmpty) return;
+    if (activeChatRoom == null || _authService.currentUserId == null) return;
 
-    final receiverId = activeReceiverId.value;
-    await dbService.sendMessage(receiverId, '', isAudio: true);
-    _refreshMessageThread(receiverId);
-
-    _simulateResponse(receiverId, "[Voice message]");
-  }
-
-  void _simulateResponse(String senderId, String userMsg) {
-    // Only simulate if they are online
-    isTyping.value = true;
-
-    Timer(const Duration(seconds: 2), () {
-      isTyping.value = false;
-      
-      String response = "That's lovely to hear! Let's talk more details with our parents.";
-      if (userMsg.toLowerCase().contains("hi") || userMsg.toLowerCase().contains("hello")) {
-        response = "Hello! How is your week going?";
-      } else if (userMsg.toLowerCase().contains("parent") || userMsg.toLowerCase().contains("family")) {
-        response = "Yes, family opinions are very important to me. My father would love to speak to yours.";
-      } else if (userMsg.toLowerCase().contains("job") || userMsg.toLowerCase().contains("career") || userMsg.toLowerCase().contains("software")) {
-        response = "It sounds like you have a very promising career. I appreciate dedication to work.";
-      }
-
-      final mockResponse = Message(
-        id: 'msg_sim_${DateTime.now().millisecondsSinceEpoch}',
-        senderId: senderId,
-        receiverId: 'usr_curr',
-        content: response,
-        sentAt: DateTime.now(),
-        isRead: false,
-      );
-
-      dbService.mockMessages.add(mockResponse);
-      if (activeReceiverId.value == senderId) {
-        _refreshMessageThread(senderId);
-      }
-    });
+    final msg = MessageModel(
+      id: '',
+      chatRoomId: activeChatRoom!.id,
+      senderId: _authService.currentUserId!,
+      message: '[Shared Voice Message]',
+    );
+    
+    await _chatRepo.sendMessage(msg);
+    await _refreshMessageThread(activeChatRoom!.id);
   }
 }
 
 class ChatListItem {
-  final UserProfile profile;
-  final Message? lastMessage;
+  final ProfileModel profile;
+  final MessageModel? lastMessage;
   final int unreadCount;
   final bool isOnline;
 

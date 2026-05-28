@@ -65,6 +65,22 @@ class SignupScreen extends GetView<AuthController> {
               ),
               const SizedBox(height: 20),
 
+              // Phone Number
+              const Text(
+                'Phone Number',
+                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: controller.signupPhoneController,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.phone_outlined),
+                  hintText: 'Enter your phone number',
+                ),
+              ),
+              const SizedBox(height: 20),
+
               // Password
               const Text(
                 'Password',

@@ -14,6 +14,7 @@ import '../modules/profile_details/profile_details_screen.dart';
 import '../modules/chat/chat_screen.dart';
 import '../modules/subscription/subscription_screen.dart';
 import '../modules/admin/admin_dashboard_screen.dart';
+import '../modules/edit_profile/edit_profile_screen.dart';
 
 class AppPages {
 
@@ -24,13 +25,13 @@ class AppPages {
 
     GetPage(name: AppRoutes.onboarding, page: () => const OnboardingScreen(), transition: Transition.fadeIn,),
 
-    GetPage(name: AppRoutes.login, page: () => const LoginScreen(), binding: AuthBinding(), transition: Transition.rightToLeft,),
+    GetPage(name: AppRoutes.login, page: () => const LoginScreen(),   transition: Transition.rightToLeft,),
 
-    GetPage(name: AppRoutes.otp, page: () => const OtpScreen(), binding: AuthBinding(), transition: Transition.rightToLeft,),
+    GetPage(name: AppRoutes.otp, page: () => const OtpScreen(),   transition: Transition.rightToLeft,),
 
-    GetPage(name: AppRoutes.signup, page: () => const SignupScreen(), binding: AuthBinding(), transition: Transition.rightToLeft,),
+    GetPage(name: AppRoutes.signup, page: () => const SignupScreen(),   transition: Transition.rightToLeft,),
 
-    GetPage(name: AppRoutes.forgotPassword, page: () => const ForgotPasswordScreen(), binding: AuthBinding(), transition: Transition.rightToLeft,),
+    GetPage(name: AppRoutes.forgotPassword, page: () => const ForgotPasswordScreen(),  transition: Transition.rightToLeft,),
 
     GetPage(name: AppRoutes.profileCreation, page: () => const ProfileCreationScreen(), transition: Transition.rightToLeft,),
 
@@ -45,5 +46,7 @@ class AppPages {
     GetPage(name: AppRoutes.subscription, page: () => const SubscriptionScreen(), transition: Transition.downToUp,),
 
     GetPage(name: AppRoutes.admin, page: () => const AdminDashboardScreen(), transition: Transition.downToUp,),
+
+    GetPage(name: AppRoutes.editProfile, page: () => const EditProfileScreen(), transition: Transition.rightToLeft,),
   ];
 }
